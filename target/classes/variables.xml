@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" xmlns:cluster="http://www.mulesoft.org/schema/mule/ee/cluster" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.6.1"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd">
+  
+    <http:listener-config name="HTTP_Listener_Configuration1" host="localhost" port="8083" doc:name="HTTP Listener Configuration"/>
+    <vm:connector name="VM" validateConnections="true" doc:name="VM"/>
+ 
+    <flow name="MainFlow">
+        <http:listener config-ref="HTTP_Listener_Configuration1" path="/var/*" doc:name="HTTP"/>
+        <set-session-variable variableName="S1" value="S1" doc:name="Session Variable"/>
+        <set-variable variableName="F1" value="F1" doc:name="Variable"/>
+        <vm:outbound-endpoint exchange-pattern="request-response" path="vmq" connector-ref="VM" doc:name="VM"/>
+        <expression-component doc:name="Expression"><![CDATA[payload = ['In ' + flow.name +' : Session Vars are ' + sessionVars + ' & Flow vars are ' + flowVars + ' and ' + message.inboundProperties['Payload2']]]]></expression-component>
+        <object-to-string-transformer doc:name="Object to String"/>
+    </flow>
+    <flow name="VMFlow2">
+        <vm:inbound-endpoint exchange-pattern="request-response" path="vmq" connector-ref="VM" doc:name="VM"/>
+        <set-session-variable variableName="S2" value="S2" doc:name="Session Variable"/>
+        <set-variable variableName="F2" value="F2" doc:name="Variable"/>
+        <expression-component doc:name="Expression"><![CDATA[payload = ['In ' + flow.name +' : Session Vars are ' + sessionVars + ' & Flow vars are ' + flowVars]]]></expression-component>
+        <message-properties-transformer doc:name="Message Properties">
+            <add-message-property key="Payload2" value="#[payload]"/>
+        </message-properties-transformer>
+    </flow>
+</mule>
